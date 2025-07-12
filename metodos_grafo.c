@@ -103,6 +103,38 @@ void liberarAresta(CelGrafo *g, int origem, int destino)
     }
 }
 
+CelGrafo* removerVertice(CelGrafo *g, int valor) {
+    CelGrafo *ant = NULL;
+    CelGrafo *p = g;
+    CelGrafo *aux = g;
+    while (aux != NULL) {
+        removerAresta(g, aux->conteudoCelGrafo, valor);
+        aux = aux->prox;
+    }
+    while (p != NULL) {
+        if (p->conteudoCelGrafo == valor) {
+            Celula *adj = p->adj;
+            while (adj != NULL) {
+                Celula *tmp = adj;
+                adj = adj->prox;
+                free(tmp);
+            }
+
+            if (ant == NULL) {
+                g = p->prox;
+            } else {
+                ant->prox = p->prox;
+            }
+            free(p);
+            return g; 
+        }
+        ant = p;
+        p = p->prox;
+    }
+    return g;
+}
+
+
 int main()
 {
     CelGrafo *g = NULL;
@@ -119,6 +151,7 @@ int main()
     percorrerListaAdj(g);
 
     liberarAresta(g, 1, 2);
+    g = removerVertice(g, 2); 
 
     CelGrafo *v = buscarVertice(g, 2);
     if (v != NULL)

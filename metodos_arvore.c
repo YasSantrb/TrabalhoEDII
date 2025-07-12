@@ -1,83 +1,167 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
-struct no {
-    char conteudo;
-    struct no *sae;
-    struct no *sad;
+typedef struct celula
+{
+    int conteudo;
+    struct celula *prox;
+} Celula;
+
+typedef struct celGrafo
+{
+    int conteudoCelGrafo;
+    Celula *adj;
+    struct celGrafo *prox;
+} CelGrafo;
+
+Celula *criarCelula(int n, Celula *p)
+{
+    Celula *x;
+    x = malloc(sizeof(Celula));
+    x->conteudo = n;
+    x->prox = p;
+    return x;
 };
-typedef struct no No;
 
-No *criar(char c, No *e, No *d){
-    No *arv = malloc(sizeof(No));
-    arv -> conteudo = c;
-    arv -> sae = e;
-    arv -> sad = d;
-    return arv;
-}
+CelGrafo *criarCelGrafo(int n, Celula *p, CelGrafo *g)
+{
+    CelGrafo *x;
+    x = malloc(sizeof(CelGrafo));
+    x->conteudoCelGrafo = n;
+    x->adj = p;
+    x->prox = g;
+    return x;
+};
 
-int buscar(No *a, char c){
-    if(a == NULL){
-        return 0;
-    } else {
-        return a -> conteudo == c || buscar(a -> sae, c) || buscar(a -> sad, c);
+void addAresta(CelGrafo *g, int origem, int d)
+{
+    CelGrafo *p = g;
+    while (p != NULL && p->conteudoCelGrafo != origem)
+    {
+        p = p->prox;
+    }
+    Celula *l = p->adj;
+    p->adj = criarCelula(d, l);
+};
+
+void percorrerListaAdj(CelGrafo *g)
+{
+    while (g != NULL)
+    {
+        printf("\n\n Vertice: %d", g->conteudoCelGrafo);
+        Celula *adj = g->adj;
+        while (adj != NULL)
+        {
+            printf("\n De %d para %d", g->conteudoCelGrafo, adj->conteudo);
+            adj = adj->prox;
+        }
+        g = g->prox;
+    }
+};
+
+CelGrafo *buscarVertice(CelGrafo *g, int valor)
+{
+    while (g != NULL)
+    {
+        if (g->conteudoCelGrafo == valor)
+        {
+            return g;
+        }
+        g = g->prox;
+    }
+    return NULL;
+};
+
+void liberarAresta(CelGrafo *g, int origem, int destino)
+{
+    while (g != NULL && g->conteudoCelGrafo != origem)
+    {
+        g = g->prox;
+    }
+    if (g == NULL)
+        return;
+
+    Celula *ant = NULL;
+    Celula *atual = g->adj;
+
+    while (atual != NULL && atual->conteudo != destino)
+    {
+        ant = atual;
+        atual = atual->prox;
+    }
+
+    if (atual != NULL)
+    {
+        if (ant == NULL)
+        {
+            g->adj = atual->prox;
+        }
+        else
+        {
+            ant->prox = atual->prox;
+        }
+        free(atual);
     }
 }
 
-int alturaNivel (No *a){
-    if (a == NULL) {
-        return -1;
-    } else{
-        int esq = alturaNivel(a -> sae);
-        int dir = alturaNivel(a -> sad);
-        return (esq > dir ? esq : dir) + 1;
+CelGrafo* removerVertice(CelGrafo *g, int valor) {
+    CelGrafo *ant = NULL;
+    CelGrafo *p = g;
+    CelGrafo *aux = g;
+    while (aux != NULL) {
+        liberarAresta(g, aux->conteudoCelGrafo, valor);
+        aux = aux->prox;
     }
+    while (p != NULL) {
+        if (p->conteudoCelGrafo == valor) {
+            Celula *adj = p->adj;
+            while (adj != NULL) {
+                Celula *tmp = adj;
+                adj = adj->prox;
+                free(tmp);
+            }
+
+            if (ant == NULL) {
+                g = p->prox;
+            } else {
+                ant->prox = p->prox;
+            }
+            free(p);
+            return g; 
+        }
+        ant = p;
+        p = p->prox;
+    }
+    return g;
 }
 
-int alturaNo (No *a){
-    if (a == NULL){
-        return 0;
-    } else {
-        int esq = alturaNo(a -> sae);
-        int dir = alturaNo(a -> sad);
-        return (esq > dir ? esq : dir) + 1;
-    }
-}
-
-void liberar(No *a){
-    if(a != NULL){
-        liberar(a->sae);
-        liberar(a->sad);
-        printf("\nLiberando nó com conteudo: %c\n", a->conteudo);
-        free(a);
-    }
-}
 
 int main()
 {
-    No *a1 = criar('d', NULL, NULL);
-    No *a2 = criar('e', NULL, NULL);
-    No *a3 = criar('f', NULL, NULL);
-    No *a4 = criar('b', NULL, a1);
-    No *a5 = criar('c', a2, a3);
-    No *a6 = criar('a', a4, a5);
-    
-    printf("Arvore criada com raiz: %c\n", a6->conteudo);
-    
-    char letra = 'e';
-    int resultado = buscar(a6, letra);
-    if (resultado) {
-        printf("Elemento '%c' encontrado!\n", letra);
-    } else {
-        printf("Elemento '%c' nao encontrado!\n", letra);
-    }
+    CelGrafo *g = NULL;
 
-    
-    int n = alturaNivel(a6);
-    printf("A altura da árvore por níveis é: %d", n);
-    
-    int y = alturaNo(a6);
-    printf("\nA altura da árvore por quantidade de nós é: %d", y);
-    
-    liberar(a1);
+    g = criarCelGrafo(1, NULL, g);
+    g = criarCelGrafo(2, NULL, g);
+    g = criarCelGrafo(3, NULL, g);
+
+    addAresta(g, 1, 2);
+    addAresta(g, 1, 3);
+    addAresta(g, 2, 3);
+    addAresta(g, 3, 1);
+
+    percorrerListaAdj(g);
+
+    liberarAresta(g, 1, 2);
+    g = removerVertice(g, 2); 
+
+    CelGrafo *v = buscarVertice(g, 2);
+    if (v != NULL)
+    {
+        printf("\nVertice %d encontrado!", v->conteudoCelGrafo);
+    }
+    else
+    {
+        printf("\nVertice não encontrado!");
+    }
 }
